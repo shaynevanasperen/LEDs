@@ -26,7 +26,7 @@ public:
 	uint8_t theta = 0;
 	bool canReverse;
 
-	uint8_t hue;
+	uint8_t Hue = 0;
 	CRGB Color1, Color2;	  // What colors are in use
 	CRGBPalette16 Palette;    // What palette is in use
 	TBlendType Blending;      // What palette blending mode is in use
@@ -69,13 +69,13 @@ public:
 	void ColorWipeUpdate();
 
 	// Initialize for a Scanner
-	void Scanner(CRGB color1, uint16_t interval);
+	void Scanner(CRGB color1, uint16_t interval, direction dir = FORWARD);
 
 	// Update the Scanner Pattern
 	void ScannerUpdate();
 
 	// Initialize for a Cylon
-	void Cylon(uint16_t interval);
+	void Cylon(uint8_t hue, uint16_t interval, direction dir = FORWARD);
 
 	// Update the Cylon Pattern
 	void CylonUpdate();

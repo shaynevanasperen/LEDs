@@ -5,7 +5,7 @@
 #define NUM_DUAL_STRIP_LEDS 300
 #define NUM_SINGLE_STRIP_LEDS 67
 #define NUM_CLOCKED_STRIP_LEDS 96
-#define PATTERN_HOLD_SECONDS 180
+#define PATTERN_HOLD_SECONDS 90
 
 CRGBPalette16 currentPalette = RainbowColors_p;
 TBlendType currentBlending = LINEARBLEND;
@@ -55,6 +55,12 @@ void patternComplete(Patterns& sender) {
 	}
 	else if (sender.ActivePattern == COLOR_WIPE) {
 		sender.Color1 = makeComplementaryColor(sender.Color1);
+		sender.Reverse();
+	}
+	else if (sender.ActivePattern == SCANNER) {
+		sender.Reverse();
+	}
+	else if (sender.ActivePattern == CYLON) {
 		sender.Reverse();
 	}
 	else if (sender.ActivePattern == FADE) {
@@ -120,9 +126,11 @@ CHSV RGB2HSV(CRGB rgb) {
 }
 
 void adjustIntervals() {
-	// The dual strips are wrapped around a pole so they need to move quicker than the others
-	strips[1].Interval = strips[0].Interval * 2;
-	strips[2].Interval = strips[0].Interval * 2;
+	if (NUM_STRIPS > 1) {
+		// The dual strips are wrapped around a pole so they need to move quicker than the others
+		strips[1].Interval = strips[0].Interval * 2;
+		strips[2].Interval = strips[0].Interval * 2;
+	}
 }
 
 CRGBPalette16& getCloudColorsPalette() {
@@ -241,138 +249,137 @@ void changePatternPeriodically() {
 		Serial.print("Pattern index: ");
 		Serial.println(patternIndex);
 
+		uint8_t interval1 = random8(10, 15);
+		uint8_t interval2 = random8(30, 40);
+		uint8_t interval3 = random8(2, 4);
+		uint8_t speedChangeInterval = random8(2, 4);
+		uint8_t maxSpeed = random8(4, 5);
+		CRGB color1 = CHSV(random8(), 255, 255);
+		CRGB color2 = makeComplementaryColor(color1);
+		uint8_t hue = random8(0, 255);
+
 		if (patternIndex == 0) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getRedAndBlueStripedPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getRedAndBlueStripedPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 1) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].RainbowCycle(random8(8, 11));
+				strips[i].RainbowCycle(interval1);
 		}
 		else if (patternIndex == 2) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getCloudColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getCloudColorsPalette(), currentBlending, BRIGHTNESS, interval2, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 3) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getLavaColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getRainbowColorsPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 4) {
-			for (int i = 0; i < NUM_STRIPS; i++) {
-				CRGB color1 = CHSV(random8(), 255, 255);
-				CRGB color2 = makeComplementaryColor(color1);
-				strips[i].TheaterChase(color1, color2, 255);
-			}
+			for (int i = 0; i < NUM_STRIPS; i++)
+				strips[i].RainbowCycle(interval2);
 		}
 		else if (patternIndex == 5) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].ColorWipe(CHSV(random8(), 255, 255), random8(15, 25));
+				strips[i].ColorWipe(color1, interval1);
 		}
 		else if (patternIndex == 6) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getOceanColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getOceanColorsPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 7) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getRandomPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getRandomPalette(), currentBlending, BRIGHTNESS, interval2, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 8) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getForestColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getForestColorsPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 9) {
-			// TODO: Figure out why this pattern index always results in the strip switching off
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].Cylon(30);
+				strips[i].Cylon(hue, interval3);
 		}
 		else if (patternIndex == 10) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getPartyColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getPartyColorsPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 11) {
 			for (int i = 0; i < NUM_STRIPS; i++) {
-				CRGB color1 = CHSV(random8(), 255, 255);
-				CRGB color2 = makeComplementaryColor(color1);
-				strips[i].Fade(color1, color2, 256, 30);
+				strips[i].Fade(color1, color2, 256, interval1);
 			}
 		}
 		else if (patternIndex == 12) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].RainbowCycle(random8(10, 15));
+				strips[i].RainbowCycle(interval2);
 		}
 		else if (patternIndex == 13) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getPurpleAndGreenPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getPurpleAndGreenPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 14) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getRandomPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getRandomPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 15) {
 			for (int i = 0; i < NUM_STRIPS; i++) {
-				CRGB color1 = CHSV(random8(), 255, 255);
-				CRGB color2 = makeComplementaryColor(color1);
 				strips[i].TheaterChase(color1, color2, 255);
 			}
 		}
 		else if (patternIndex == 16) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getRainbowStripeColorsPalette(), currentBlending, BRIGHTNESS, 100, 5, 10);
+				strips[i].MovingPalette(getRainbowStripeColorsPalette(), currentBlending, BRIGHTNESS, interval2, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 17) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getMyRedWhiteAndBluePalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].Scanner(color1, interval3);
 		}
 		else if (patternIndex == 18) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getHeatColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getHeatColorsPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 19) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].ColorWipe(CHSV(random8(), 255, 255), random8(15, 25));
+				strips[i].ColorWipe(color1, interval1);
 		}
 		else if (patternIndex == 20) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].Cylon(30);
+				strips[i].Cylon(hue, interval3);
 		}
 		else if (patternIndex == 21) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getRandomPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getRandomPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 22) {
 			for (int i = 0; i < NUM_STRIPS; i++) {
-				CRGB color1 = CHSV(random8(), 255, 255);
-				CRGB color2 = makeComplementaryColor(color1);
-				strips[i].Fade(color1, color2, 256, 20);
+				strips[i].Fade(color1, color2, 256, interval1);
 			}
 		}
 		else if (patternIndex == 23) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getRainbowColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getRainbowColorsPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 24) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getRedGreenBlueWhitePalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getRedGreenBlueWhitePalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 25) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].Cylon(random8(25, 35));
+				strips[i].Cylon(hue, interval3);
 		}
 		else if (patternIndex == 26) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].RainbowCycle(random8(10, 15));
+				strips[i].RainbowCycle(interval1);
 		}
 		else if (patternIndex == 27) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getPartyColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getPartyColorsPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 28) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getLavaColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getLavaColorsPalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 		else if (patternIndex == 29) {
 			for (int i = 0; i < NUM_STRIPS; i++)
-				strips[i].MovingPalette(getCloudColorsPalette(), currentBlending, BRIGHTNESS, random8(15, 25), random8(4, 7), random8(3, 6));
+				strips[i].MovingPalette(getMyRedWhiteAndBluePalette(), currentBlending, BRIGHTNESS, interval1, speedChangeInterval, maxSpeed);
 		}
 
 		adjustIntervals();

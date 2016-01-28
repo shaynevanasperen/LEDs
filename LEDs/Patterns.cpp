@@ -115,20 +115,20 @@ void Patterns::ColorWipeUpdate() {
 	Increment();
 }
 
-void Patterns::Scanner(CRGB color1, uint16_t interval) {
+void Patterns::Scanner(CRGB color1, uint16_t interval, direction dir) {
 	ActivePattern = SCANNER;
 	Interval = interval;
-	TotalSteps = (_numLeds - 1) * 2;
+	TotalSteps = _numLeds;
 	Color1 = color1;
 	Index = 0;
+	Direction = dir;
 }
 
 void Patterns::ScannerUpdate() {
 	for (int i = 0; i < _numLeds; i++) {
-		if (i == Index)
-			_leds[i] = Color1; // Scan Pixel to the right
-		else if (i == TotalSteps - Index)
-			_leds[i] = Color1; // Scan Pixel to the left
+		if (i == Index || i == Index - 1 || i == Index - 2 || i == Index + 1 || i == Index + 2) {
+			_leds[i] = Color1;
+		}
 		else {
 			_leds[i].nscale8(250); // Fading tail
 		}
@@ -136,19 +136,20 @@ void Patterns::ScannerUpdate() {
 	Increment();
 }
 
-void Patterns::Cylon(uint16_t interval) {
+void Patterns::Cylon(uint8_t hue, uint16_t interval, direction dir) {
 	ActivePattern = CYLON;
 	Interval = interval;
-	TotalSteps = (_numLeds - 1) * 2;
+	TotalSteps = _numLeds;
+	Hue = hue;
 	Index = 0;
+	Direction = dir;
 }
 
 void Patterns::CylonUpdate() {
 	for (int i = 0; i < _numLeds; i++) {
-		if (i == Index)
-			_leds[i] = CHSV(hue++, 255, 255); // Scan Pixel to the right
-		else if (i == TotalSteps - Index)
-			_leds[i] = CHSV(hue++, 255, 255); // Scan Pixel to the left
+		if (i == Index || i == Index - 1 || i == Index - 2 || i == Index + 1 || i == Index + 2) {
+			_leds[i] = CHSV(Hue++, 255, 255);
+		}
 		else {
 			_leds[i].nscale8(250); // Fading tail
 		}
